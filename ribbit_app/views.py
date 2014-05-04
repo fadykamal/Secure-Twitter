@@ -133,3 +133,15 @@ def follow(request):
             except ObjectDoesNotExist:
                 return redirect('/users/')
     return redirect('/users/')
+
+@login_required
+def unfollow(request):
+    if request.method == "POST":
+        unfollow_id = request.POST.get('unfollow', False)
+        if unfollow_id:
+            try:
+                user = User.objects.get(id=unfollow_id)
+                request.user.profile.follows.remove(user.profile)
+            except ObjectDoesNotExist:
+                return redirect('/users/')
+    return redirect('/users/')

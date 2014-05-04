@@ -8,6 +8,10 @@ class Ribbit(models.Model):
     user = models.ForeignKey(User)
     creation_date = models.DateTimeField(auto_now=True, blank=True)
 
+class UserRibbitEncryption(models.Model):
+	user = models.OneToOneField(User)
+	private_key = models.CharField(max_length = 100)
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
     follows = models.ManyToManyField('self', related_name='followed_by', symmetrical=False)

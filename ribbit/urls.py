@@ -15,6 +15,7 @@ urlpatterns = patterns('',
     url(r'^users/$', 'ribbit_app.views.users'),
     url(r'^users/(?P<username>\w{0,30})/$', 'ribbit_app.views.users'),
     url(r'^follow$', 'ribbit_app.views.follow'),
+    url(r'^unfollow$', 'ribbit_app.views.unfollow'),
     # url(r'^ribbit/', include('ribbit.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

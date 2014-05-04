@@ -26,6 +26,13 @@
                 <input type="submit" value="Follow">
             </form>
             {% endif %}
+            {% if unfollow %}
+            <form action="/unfollow" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="unfollow" value="{{ user.id }}">
+                <input type="submit" value="Unfollow">
+            </form>
+            {% endif %}
         </div>
     </div>
 
