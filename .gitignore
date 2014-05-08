@@ -1,2 +1,4 @@
 *.pyc
 ribbit/database.db
+
+*.db
