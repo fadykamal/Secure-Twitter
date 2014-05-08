@@ -18,13 +18,13 @@ Make a virtual environment
 ```
 virtualenv --no-site-packages ribbit_env
 ```
-  
+
 With the the virtual environment activated, install the dependencies
 
 ```
 pip install Django South
 ```
-  
+
 Next, `cd` into the repository and run the `syncdb` command to create the tables and superuser account
 
 ```
@@ -36,9 +36,21 @@ Then, apply the migrations
 ```
 python manage.py migrate ribbit_app
 ```
-  
+
 Finally, start the development server to preview the application
 
 ```
 python manage.py runserver
+```
+
+Some notes regarding issues running the project
+
+1- to ensure database migrations as a workaround use the following
+
+```
+python manage.py syncdb --all
+```
+
+```
+python manage.py migrate ribbit_app --fake
 ```
