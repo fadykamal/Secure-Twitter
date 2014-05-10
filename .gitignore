@@ -1,2 +1,3 @@
 *.pyc
 ribbit/database.db
+ribbit_env/
