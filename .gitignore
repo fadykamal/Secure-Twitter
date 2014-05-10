@@ -1,5 +1,4 @@
 *.pyc
 ribbit/database.db
-
-*.db
+ribbit_env/
 *.db
