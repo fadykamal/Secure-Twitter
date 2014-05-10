@@ -84,6 +84,7 @@ def submit(request):
         if ribbit_form.is_valid():
             ribbit = ribbit_form.save(commit=False)
             ribbit.user = request.user
+            ribbit.content = encrypt(ribbit.content, )
             ribbit.save()
             return redirect(next_url)
         else:
@@ -145,3 +146,11 @@ def unfollow(request):
             except ObjectDoesNotExist:
                 return redirect('/users/')
     return redirect('/users/')
+
+def encrypt(plain_text, key):
+    # Actual encryption process
+    return plain_text
+
+def encrypt(encrypted_text, key):
+    # Actual decryption process
+    return encrypted_text
