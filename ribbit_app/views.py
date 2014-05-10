@@ -84,6 +84,8 @@ def submit(request):
 		if ribbit_form.is_valid():
 			ribbit = ribbit_form.save(commit=False)
 			ribbit.user = request.user
+			user_profile = UserProfile.objects.get(user=request.user)
+			ribbit.content = encrypt(ribbit.content,user_profile.private_key)
 			ribbit.save()
 			return redirect(next_url)
 		else:
@@ -129,7 +131,7 @@ def messages(request):
 		output_dict = {'senders': list(set(senders))}
 		return render(request,'messages.html', output_dict)
 	except User.DoesNotExist:
-            raise Http404
+			raise Http404
 
 
 @login_required
@@ -157,9 +159,9 @@ def unfollow(request):
 	return redirect('/users/')
 
 def encrypt(plain_text, key):
-    # Actual encryption process
-    return plain_text
+	# Actual encryption process
+	return plain_text
 
-def encrypt(encrypted_text, key):
-    # Actual decryption process
-    return encrypted_text
+def decrypt(encrypted_text, key):
+	# Actual decryption process
+	return encrypted_text
