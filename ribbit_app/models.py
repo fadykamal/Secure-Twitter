@@ -10,11 +10,12 @@ class Ribbit(models.Model):
 
 class UserRibbitEncryption(models.Model):
 	user = models.OneToOneField(User)
-	private_key = models.CharField(max_length = 100)
+	public_key = models.CharField(max_length = 100)
 
 class UserProfile(models.Model):
 	user = models.OneToOneField(User)
 	follows = models.ManyToManyField('self', related_name='followed_by', symmetrical=False)
+	private_key = models.CharField(max_length = 100)
 	
 	def __unicode__(self):
 		return u'%s' % (self.user)
