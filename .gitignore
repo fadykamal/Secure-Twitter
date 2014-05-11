@@ -1,3 +1,4 @@
+*.DS_Store
 *.pyc
 ribbit/database.db
 ribbit_env/
