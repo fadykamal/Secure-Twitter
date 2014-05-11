@@ -124,13 +124,23 @@ def users(request, username="", ribbit_form=None):
 @login_required
 def messages(request):
 	try:
-		users = User.objects.all().annotate(ribbit_count=Count('ribbit'))
 		senders = [message.sender for message in Messages.objects.filter(receiver=request.user.id)]
 		output_dict = {'senders': list(set(senders))}
 		return render(request,'messages.html', output_dict)
 	except User.DoesNotExist:
             raise Http404
 
+@login_required
+def view_messages(request,username):
+	try:
+		sender_messages = [message for message in Messages.objects.filter(receiver=request.user.id, sender=User.objects.get(username=username).id)]
+		reciever_messages = [message for message in Messages.objects.filter(receiver=User.objects.get(username=username).id, sender=request.user.id)]
+		messages = sender_messages+reciever_messages
+		messages.sort(key=lambda x: x.creation_date, reverse=False)
+		output_dict = {'messages': messages}
+		return render(request,'view_messages.html', output_dict)
+	except User.DoesNotExist:
+            raise Http404
 
 @login_required
 def follow(request):

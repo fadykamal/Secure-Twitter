@@ -25,6 +25,7 @@ class Messages(models.Model):
 	sender = models.ForeignKey(User, related_name='sender')
 	receiver = models.ForeignKey(User, related_name='receiver')
 	content = models.CharField(max_length=2048)
+	creation_date = models.DateTimeField(auto_now=True, blank=True)
 
 	def __unicode__(self):
 		return u'%s %s %s' % (self.sender,":",self.content)

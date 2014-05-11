@@ -54,4 +54,13 @@ python manage.py syncdb --all
 ```
 python manage.py migrate ribbit_app --fake
 ```
-if you'd like to edit in the css, edit in the directory `ribbit_app/static/style.less` and it's compiled automatically
+but try to use the appropriate way when changing a model by executing the following process:
+	Chnage in the models
+	```
+	python manage.py schemamigration ribbit_app --auto
+	```
+	```
+	python manage.py migrate ribbit_app
+	```
+	and you're done
+2- if you'd like to edit in the css, edit in the directory `ribbit_app/static/style.less` and it's compiled automatically

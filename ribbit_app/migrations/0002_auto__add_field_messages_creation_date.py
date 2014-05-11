@@ -8,63 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Ribbit'
-        db.create_table('ribbit_app_ribbit', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('content', self.gf('django.db.models.fields.CharField')(max_length=140)),
-            ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
-            ('creation_date', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-        ))
-        db.send_create_signal('ribbit_app', ['Ribbit'])
-
-        # Adding model 'UserRibbitEncryption'
-        db.create_table('ribbit_app_userribbitencryption', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.User'], unique=True)),
-            ('private_key', self.gf('django.db.models.fields.CharField')(max_length=100)),
-        ))
-        db.send_create_signal('ribbit_app', ['UserRibbitEncryption'])
-
-        # Adding model 'UserProfile'
-        db.create_table('ribbit_app_userprofile', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('user', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.User'], unique=True)),
-        ))
-        db.send_create_signal('ribbit_app', ['UserProfile'])
-
-        # Adding M2M table for field follows on 'UserProfile'
-        db.create_table('ribbit_app_userprofile_follows', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('from_userprofile', models.ForeignKey(orm['ribbit_app.userprofile'], null=False)),
-            ('to_userprofile', models.ForeignKey(orm['ribbit_app.userprofile'], null=False))
-        ))
-        db.create_unique('ribbit_app_userprofile_follows', ['from_userprofile_id', 'to_userprofile_id'])
-
-        # Adding model 'Messages'
-        db.create_table('ribbit_app_messages', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('sender', self.gf('django.db.models.fields.related.ForeignKey')(related_name='sender', to=orm['auth.User'])),
-            ('receiver', self.gf('django.db.models.fields.related.ForeignKey')(related_name='receiver', to=orm['auth.User'])),
-            ('content', self.gf('django.db.models.fields.CharField')(max_length=2048)),
-        ))
-        db.send_create_signal('ribbit_app', ['Messages'])
+        # Adding field 'Messages.creation_date'
+        db.add_column('ribbit_app_messages', 'creation_date',
+                      self.gf('django.db.models.fields.DateTimeField')(auto_now=True, default=datetime.datetime(2014, 5, 11, 0, 0), blank=True),
+                      keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting model 'Ribbit'
-        db.delete_table('ribbit_app_ribbit')
-
-        # Deleting model 'UserRibbitEncryption'
-        db.delete_table('ribbit_app_userribbitencryption')
-
-        # Deleting model 'UserProfile'
-        db.delete_table('ribbit_app_userprofile')
-
-        # Removing M2M table for field follows on 'UserProfile'
-        db.delete_table('ribbit_app_userprofile_follows')
-
-        # Deleting model 'Messages'
-        db.delete_table('ribbit_app_messages')
+        # Deleting field 'Messages.creation_date'
+        db.delete_column('ribbit_app_messages', 'creation_date')
 
 
     models = {
@@ -107,6 +59,7 @@ class Migration(SchemaMigration):
         'ribbit_app.messages': {
             'Meta': {'object_name': 'Messages'},
             'content': ('django.db.models.fields.CharField', [], {'max_length': '2048'}),
+            'creation_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'receiver': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'receiver'", 'to': "orm['auth.User']"}),
             'sender': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'sender'", 'to': "orm['auth.User']"})

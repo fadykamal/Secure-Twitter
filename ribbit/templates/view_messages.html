@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+	<div class="panel left">
+		<h1>Messages</h1>
+		{% for message in messages %}
+		<div class="messageWrapper">
+				<img class="avatar" src="{{ message.sender.profile.gravatar_url }}">
+				<span class="name">{{ message.content }}</span>
+		</div>
+		{% endfor %}
+	</div>
+
+{% endblock %}
