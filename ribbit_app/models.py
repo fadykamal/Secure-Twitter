@@ -15,7 +15,7 @@ class UserRibbitEncryption(models.Model):
 class UserProfile(models.Model):
 	user = models.OneToOneField(User)
 	follows = models.ManyToManyField('self', related_name='followed_by', symmetrical=False)
-	private_key = models.CharField(max_length = 100)
+	private_key = models.CharField(max_length = 1024)
 	
 	def __unicode__(self):
 		return u'%s' % (self.user)
