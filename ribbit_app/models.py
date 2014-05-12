@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 import hashlib
-
+import bcrypt
 
 class Ribbit(models.Model):
 	content = models.CharField(max_length=140)
@@ -34,8 +34,20 @@ class Messages(models.Model):
 	receiver = models.ForeignKey(User, related_name='receiver')
 	content = models.CharField(max_length=2048)
 	creation_date = models.DateTimeField(auto_now=True, blank=True)
+	salt = models.CharField(max_length=64, default="")
+	d_sign = models.CharField(max_length=128, default="")
 
 	def __unicode__(self):
 		return u'%s %s %s' % (self.sender,":",self.content)
+
+	def digital_sign(self):
+		salt = bcrypt.gensalt()
+		sign = bcrypt.hashpw(self.content.encode('utf-8'),
+                salt)
+
+		self.salt = salt
+		self.d_sign = sign
+		self.save()
+		return sign
 
 User.profile = property(lambda u: UserProfile.objects.get_or_create(user=u)[0])

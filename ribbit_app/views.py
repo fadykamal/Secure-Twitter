@@ -168,7 +168,8 @@ def view_messages(request,username):
 @login_required
 def send_message(request,username):
 	if 'sent_message' in request.POST and request.POST['sent_message']:
-		Messages.objects.create(sender=request.user, receiver=User.objects.get(username=username), content=request.POST['sent_message'])
+		message = Messages.objects.create(sender=request.user, receiver=User.objects.get(username=username), content=request.POST['sent_message'])
+		message.digital_sign()
 		print 'haloloealaaa'
 		return redirect(u'/messages/%s' % (username))
 	else:
