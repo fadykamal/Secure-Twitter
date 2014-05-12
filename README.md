@@ -62,6 +62,6 @@ python manage.py schemamigration ribbit_app --auto
 ```
 python manage.py migrate ribbit_app
 ```
-and you're done
-
+then you're done
+and everytime you pull and find an error regarding migrations try to migrate first then if it's not migrated execute the previous process.
 2- if you'd like to edit in the css, edit in the directory `ribbit_app/static/style.less` and it's compiled automatically

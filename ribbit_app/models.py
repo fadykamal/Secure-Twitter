@@ -14,13 +14,20 @@ class UserRibbitEncryption(models.Model):
 
 class UserProfile(models.Model):
 	user = models.OneToOneField(User)
-	follows = models.ManyToManyField('self', related_name='followed_by', symmetrical=False)
+	#follows = models.ManyToManyField('self', related_name='followed_by', symmetrical=False)
 	private_key = models.CharField(max_length = 100)
 	
 	def __unicode__(self):
 		return u'%s' % (self.user)
 	def gravatar_url(self):
 		return "http://www.gravatar.com/avatar/%s?s=50" % hashlib.md5(self.user.email).hexdigest()
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, related_name='follower')
+    followed = models.ForeignKey(User, related_name='followed')
+
+    def __unicode__(self):
+    	return self.follower.username + " -> " + self.followed.username
 
 class Messages(models.Model):
 	sender = models.ForeignKey(User, related_name='sender')
