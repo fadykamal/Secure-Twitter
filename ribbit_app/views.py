@@ -7,7 +7,7 @@ from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist
 from ribbit_app.forms import AuthenticateForm, UserCreateForm, RibbitForm
 from ribbit_app.models import *
-# from Crypto.PublicKey import RSA
+from Crypto.PublicKey import RSA
 
 #don't forget to fix the commeted line
 def index(request, auth_form=None, user_form=None):
@@ -82,9 +82,9 @@ def signup(request):
 			user.profile
 			user_profile = UserProfile.objects.get(user=user)
 			if not user_profile.private_key:
-				# keys = create_keys(request)
-				# user_profile.private_key = get_private_key(keys)
-				user_profile.private_key = "Mo7sen" # This is just a test
+				keys = create_keys(request)
+				user_profile.private_key = get_private_key(keys)
+				#user_profile.private_key = "Mo7sen" # This is just a test
 				user_profile.save()
 			login(request, user)
 			return redirect('/')
