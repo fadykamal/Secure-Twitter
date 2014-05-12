@@ -73,7 +73,7 @@ def signup(request):
 			user = authenticate(username=username, password=password)
 			#user.profile
 			#user_profile = UserProfile.objects.get(user=user)
-			keys = create_keys(request)
+			keys = create_keys(bits=1024)
 			user.profile.private_key = get_private_key(keys)
 			#user_profile.private_key = "Mo7sen" # This is just a test
 			#user_profile.save()
@@ -210,8 +210,8 @@ def unfollow(request):
 				return redirect('/users/')
 	return redirect('/users/')
 
-def create_keys(request):
-    keys = RSA.generate(1024)
+def create_keys(bits):
+    keys = RSA.generate(bits)
     return keys
 
 def get_private_key(keys):
