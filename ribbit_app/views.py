@@ -8,6 +8,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from ribbit_app.forms import AuthenticateForm, UserCreateForm, RibbitForm
 from ribbit_app.models import *
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Signature import PKCS1_v1_5 
+from Crypto.Hash import SHA256 
+from base64 import b64decode, b64encode
 
 #don't forget to fix the commeted line
 def index(request, auth_form=None, user_form=None):
@@ -59,18 +63,6 @@ def logout_view(request):
 	logout(request)
 	return redirect('/')
 
-def create_keys(request):
-    keys = RSA.generate(1024)
-    return keys
-
-def get_private_key(keys):
-    private_key = keys.exportKey()
-    return private_key
-
-def get_public_key(keys):
-    public_key = keys.publickey().exportKey()
-    return public_key
-
 def signup(request):
 	user_form = UserCreateForm(data=request.POST)
 	if request.method == 'POST':
@@ -79,13 +71,13 @@ def signup(request):
 			password = user_form.clean_password2()
 			user_form.save()
 			user = authenticate(username=username, password=password)
-			user.profile
-			user_profile = UserProfile.objects.get(user=user)
-			if not user_profile.private_key:
-				keys = create_keys(request)
-				user_profile.private_key = get_private_key(keys)
-				#user_profile.private_key = "Mo7sen" # This is just a test
-				user_profile.save()
+			#user.profile
+			#user_profile = UserProfile.objects.get(user=user)
+			keys = create_keys(request)
+			user.profile.private_key = get_private_key(keys)
+			#user_profile.private_key = "Mo7sen" # This is just a test
+			#user_profile.save()
+			user.enc.public_key = get_public_key(keys)
 			login(request, user)
 			return redirect('/')
 		else:
@@ -218,10 +210,50 @@ def unfollow(request):
 				return redirect('/users/')
 	return redirect('/users/')
 
-def encrypt(plain_text, key):
-	# Actual encryption process
-	return plain_text
+def create_keys(request):
+    keys = RSA.generate(1024)
+    return keys
 
+def get_private_key(keys):
+    private_key = keys.exportKey()
+    return private_key
+
+def get_public_key(keys):
+    public_key = keys.publickey().exportKey()
+    return public_key
+
+@login_required
+def encrypt(plain_text, key):
+    rsakey = RSA.importKey(key)
+    rsakey = PKCS1_OAEP.new(rsakey)
+    encrypted_text = rsakey.encrypt(message)
+    return encrypted_text.encode('base64')
+
+@login_required
 def decrypt(encrypted_text, key):
-	# Actual decryption process
-	return encrypted_text
+    rsakey = RSA.importKey(key) 
+    rsakey = PKCS1_OAEP.new(rsakey) 
+    plain_text = rsakey.decrypt(b64decode(package)) 
+    return plain_text
+
+@login_required
+def add_signature(private_key, data):
+    rsakey = RSA.importKey(private_key) 
+    signature = PKCS1_v1_5.new(rsakey) 
+    sha256 = SHA256.new() 
+    # Data is already base64 encoded (as encrypted with the method 'encrypt')
+    sha256.update(b64decode(data)) 
+    signed_data = signature.sign(sha256) 
+    return b64encode(signed_data)
+
+@login_required
+def verify_signature(public_key, signature, data):
+    rsakey = RSA.importKey(public_key) 
+    signature = PKCS1_v1_5.new(rsakey) 
+    sha256 = SHA256.new() 
+    # Data is already base64 encoded (as encrypted with the method 'encrypt')
+    sha256.update(b64decode(data)) 
+    if signature.verify(sha256, b64decode(signature)):
+        return True
+    return False
+

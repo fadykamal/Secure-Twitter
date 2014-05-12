@@ -50,3 +50,5 @@ class Messages(models.Model):
 		return sign
 
 User.profile = property(lambda u: UserProfile.objects.get_or_create(user=u)[0])
+User.enc = property(lambda u: UserRibbitEncryption.objects.get_or_create(user=u)[0])
+
