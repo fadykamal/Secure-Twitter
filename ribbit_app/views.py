@@ -9,16 +9,24 @@ from ribbit_app.forms import AuthenticateForm, UserCreateForm, RibbitForm
 from ribbit_app.models import *
 from Crypto.PublicKey import RSA
 
-
+#don't forget to fix the commeted line
 def index(request, auth_form=None, user_form=None):
 	# User is logged in
 	if request.user.is_authenticated():
 		ribbit_form = RibbitForm()
 		user = request.user
-		ribbits_self = Ribbit.objects.filter(user=user.id)
-		ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
-		ribbits = ribbits_self | ribbits_buddies
-
+		ribbits_self = []
+		for qribbit in Ribbit.objects.filter(user=user.id):
+			ribbits_self.append(qribbit)
+		ribbits_buddies = []
+		for fuser in Follow.objects.filter(follower=request.user):
+			for ribbit in Ribbit.objects.filter(user=fuser.followed):
+				print ribbit.content
+				ribbits_buddies.append(ribbit)
+		#ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
+		print ribbits_buddies
+		ribbits = ribbits_self + ribbits_buddies
+		ribbits.sort(key=lambda x: x.creation_date, reverse=False)
 		return render(request,
 					  'buddies.html',
 					  {'ribbit_form': ribbit_form, 'user': user,
@@ -126,7 +134,14 @@ def users(request, username="", ribbit_form=None):
 		except User.DoesNotExist:
 			raise Http404
 		ribbits = Ribbit.objects.filter(user=user.id)
-		if username == request.user.username or request.user.profile.follows.filter(user__username=username):
+		# username2=''
+		# try:
+		# 	username2=Follow.objects.filter(follower=request.user,followed=User.objects.get(username=username))
+		# 	print 'tryyyy'
+		# except:
+		# 	username2=''
+		if username == request.user.username or Follow.objects.filter(follower=request.user,followed=User.objects.get(username=username)):#username2:# or Follow.objects.get(follower=request.user,followed=User.objects.get(username=username)).followed.username:
+		#or request.user.profile.follows.filter(user__username=username):
 			# Self Profile
 			return render(request, 'user.html', {'user': user, 'ribbits': ribbits, })
 		return render(request, 'user.html', {'user': user, 'ribbits': ribbits, 'follow': True, })
@@ -151,15 +166,31 @@ def messages(request):
 
 @login_required
 def view_messages(request,username):
+	#print User.objects.get(id=request.user.id).profile.follows.objects.get(id=request.user.id)
+	#print UserProfile.objects.get(user=request.user).follows.all()
 	try:
+		if request.user.id == User.objects.get(username=username).id:
+			raise Http404
 		sender_messages = [message for message in Messages.objects.filter(receiver=request.user.id, sender=User.objects.get(username=username).id)]
 		reciever_messages = [message for message in Messages.objects.filter(receiver=User.objects.get(username=username).id, sender=request.user.id)]
 		messages = sender_messages+reciever_messages
 		messages.sort(key=lambda x: x.creation_date, reverse=False)
-		output_dict = {'messages': messages}
+		output_dict = {'messages': messages,
+						'next_url': u'/messages/%s/send_message' % (username)}
 		return render(request,'view_messages.html', output_dict)
 	except User.DoesNotExist:
             raise Http404
+
+#what's missing that i shouldn't be able to send messages only to those i follow and follow me
+@login_required
+def send_message(request,username):
+	if 'sent_message' in request.POST and request.POST['sent_message']:
+		message = Messages.objects.create(sender=request.user, receiver=User.objects.get(username=username), content=request.POST['sent_message'])
+		message.digital_sign()
+		print 'haloloealaaa'
+		return redirect(u'/messages/%s' % (username))
+	else:
+		raise Http404
 
 @login_required
 def follow(request):
@@ -168,7 +199,7 @@ def follow(request):
 		if follow_id:
 			try:
 				user = User.objects.get(id=follow_id)
-				request.user.profile.follows.add(user.profile)
+				Follow.objects.create(follower=request.user,followed=user)
 			except ObjectDoesNotExist:
 				return redirect('/users/')
 	return redirect('/users/')
@@ -180,7 +211,7 @@ def unfollow(request):
 		if unfollow_id:
 			try:
 				user = User.objects.get(id=unfollow_id)
-				request.user.profile.follows.remove(user.profile)
+				Follow.objects.get(follower=request.user,followed=user).delete()
 			except ObjectDoesNotExist:
 				return redirect('/users/')
 	return redirect('/users/')
