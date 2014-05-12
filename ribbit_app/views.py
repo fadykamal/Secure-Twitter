@@ -233,7 +233,7 @@ def encrypt(plain_text, key):
 def decrypt(encrypted_text, key):
     rsakey = RSA.importKey(key) 
     rsakey = PKCS1_OAEP.new(rsakey) 
-    plain_text = rsakey.decrypt(b64decode(package)) 
+    plain_text = rsakey.decrypt(b64decode(data)) 
     return plain_text
 
 @login_required
