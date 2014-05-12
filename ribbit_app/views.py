@@ -7,6 +7,7 @@ from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist
 from ribbit_app.forms import AuthenticateForm, UserCreateForm, RibbitForm
 from ribbit_app.models import *
+from Crypto.PublicKey import RSA
 
 #don't forget to fix the commeted line
 def index(request, auth_form=None, user_form=None):
@@ -58,6 +59,17 @@ def logout_view(request):
 	logout(request)
 	return redirect('/')
 
+def create_keys(request):
+    keys = RSA.generate(1024)
+    return keys
+
+def get_private_key(keys):
+    private_key = keys.exportKey()
+    return private_key
+
+def get_public_key(keys):
+    public_key = keys.publickey().exportKey()
+    return public_key
 
 def signup(request):
 	user_form = UserCreateForm(data=request.POST)
@@ -87,6 +99,11 @@ def public(request, ribbit_form=None):
 @login_required
 def submit(request):
 	if request.method == "POST":
+		user_profile = UserProfile.objects.get(user=request.user)
+		if(user_profile.private_key is None):
+			keys = create_keys(request)
+			user_profile.private_key = get_private_key(keys)
+			user_profile.save()
 		ribbit_form = RibbitForm(data=request.POST)
 		next_url = request.POST.get("next_url", "/")
 		if ribbit_form.is_valid():
