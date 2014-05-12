@@ -7,7 +7,7 @@ from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist
 from ribbit_app.forms import AuthenticateForm, UserCreateForm, RibbitForm
 from ribbit_app.models import *
-from Crypto.PublicKey import RSA
+# from Crypto.PublicKey import RSA
 
 #don't forget to fix the commeted line
 def index(request, auth_form=None, user_form=None):
@@ -23,7 +23,7 @@ def index(request, auth_form=None, user_form=None):
 			for ribbit in Ribbit.objects.filter(user=fuser.followed):
 				print ribbit.content
 				ribbits_buddies.append(ribbit)
-		#ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
+		# ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
 		print ribbits_buddies
 		ribbits = ribbits_self + ribbits_buddies
 		ribbits.sort(key=lambda x: x.creation_date, reverse=False)
@@ -79,6 +79,13 @@ def signup(request):
 			password = user_form.clean_password2()
 			user_form.save()
 			user = authenticate(username=username, password=password)
+			user.profile
+			user_profile = UserProfile.objects.get(user=user)
+			if not user_profile.private_key:
+				# keys = create_keys(request)
+				# user_profile.private_key = get_private_key(keys)
+				user_profile.private_key = "Mo7sen" # This is just a test
+				user_profile.save()
 			login(request, user)
 			return redirect('/')
 		else:
@@ -99,11 +106,6 @@ def public(request, ribbit_form=None):
 @login_required
 def submit(request):
 	if request.method == "POST":
-		user_profile = UserProfile.objects.get(user=request.user)
-		if(user_profile.private_key is None):
-			keys = create_keys(request)
-			user_profile.private_key = get_private_key(keys)
-			user_profile.save()
 		ribbit_form = RibbitForm(data=request.POST)
 		next_url = request.POST.get("next_url", "/")
 		if ribbit_form.is_valid():
