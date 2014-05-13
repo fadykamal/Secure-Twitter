@@ -12,6 +12,7 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import PKCS1_v1_5 
 from Crypto.Hash import SHA256 
 from base64 import b64decode, b64encode
+import string
 
 #don't forget to fix the commeted line
 def index(request, auth_form=None, user_form=None):
@@ -63,23 +64,50 @@ def logout_view(request):
 	logout(request)
 	return redirect('/')
 
+def more_than_length(password):
+        return len(password) >= 6
+
+def less_than_length(password):
+    return len(password) <= 18
+
+def lowercase_check(password):
+    return len(set(string.ascii_lowercase).intersection(password)) > 0
+
+def uppercase_check(password):
+    return len(set(string.ascii_uppercase).intersection(password)) > 0
+
+def digit_check(password):
+    return len(set(string.digits).intersection(password)) > 0
+
+def spcl_character_check(password):
+    return len(set(string.punctuation).intersection(password)) > 0
+
+def password_entropy(password, tests):
+    for test in tests:
+        if not test(password):
+            return False
+    return True
+
 def signup(request):
 	user_form = UserCreateForm(data=request.POST)
 	if request.method == 'POST':
 		if user_form.is_valid():
 			username = user_form.clean_username()
 			password = user_form.clean_password2()
-			user_form.save()
-			user = authenticate(username=username, password=password)
-			keys = create_keys(bits=1024)
-			user_profile = user.profile
-			user_profile.private_key = get_private_key(keys)
-			public_key_object = user.enc
-			public_key_object.public_key = get_public_key(keys)
-			public_key_object.save()
-			user_profile.save()
-			login(request, user)
-			return redirect('/')
+			if(password_entropy(password=password, tests=[more_than_length, less_than_length, lowercase_check, uppercase_check, digit_check, spcl_character_check])):
+				user_form.save()
+				user = authenticate(username=username, password=password)
+				keys = create_keys(bits=1024)
+				user_profile = user.profile
+				user_profile.private_key = get_private_key(keys)
+				public_key_object = user.enc
+				public_key_object.public_key = get_public_key(keys)
+				public_key_object.save()
+				user_profile.save()
+				login(request, user)
+				return redirect('/')
+			else:
+				return index(request, user_form=user_form)	
 		else:
 			return index(request, user_form=user_form)
 	return redirect('/')
