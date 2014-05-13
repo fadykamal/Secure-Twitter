@@ -71,13 +71,13 @@ def signup(request):
 			password = user_form.clean_password2()
 			user_form.save()
 			user = authenticate(username=username, password=password)
-			#user.profile
-			#user_profile = UserProfile.objects.get(user=user)
 			keys = create_keys(bits=1024)
-			user.profile.private_key = get_private_key(keys)
-			#user_profile.private_key = "Mo7sen" # This is just a test
-			#user_profile.save()
-			user.enc.public_key = get_public_key(keys)
+			user_profile = user.profile
+			user_profile.private_key = get_private_key(keys)
+			public_key_object = user.enc
+			public_key_object.public_key = get_public_key(keys)
+			public_key_object.save()
+			user_profile.save()
 			login(request, user)
 			return redirect('/')
 		else:
