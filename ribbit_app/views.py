@@ -100,7 +100,7 @@ def submit(request):
 	if request.method == "POST":
 		ribbit_form = RibbitForm(data=request.POST)
 		next_url = request.POST.get("next_url", "/")
-		if ribbit_form.is_valid():
+		if ribbit_form.is_valid(): 
 			ribbit = ribbit_form.save(commit=False)
 			ribbit.user = request.user
 			user_profile = UserProfile.objects.get(user=request.user)
@@ -226,14 +226,14 @@ def get_public_key(keys):
 def encrypt(plain_text, key):
     rsakey = RSA.importKey(key)
     rsakey = PKCS1_OAEP.new(rsakey)
-    encrypted_text = rsakey.encrypt(message)
+    encrypted_text = rsakey.encrypt(plain_text)
     return encrypted_text.encode('base64')
 
 @login_required
 def decrypt(encrypted_text, key):
     rsakey = RSA.importKey(key) 
     rsakey = PKCS1_OAEP.new(rsakey) 
-    plain_text = rsakey.decrypt(b64decode(data)) 
+    plain_text = rsakey.decrypt(b64decode(encrypted_text)) 
     return plain_text
 
 @login_required
