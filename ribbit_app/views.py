@@ -27,7 +27,9 @@ def index(request, auth_form=None, user_form=None):
 		for fuser in Follow.objects.filter(follower=request.user):
 			for ribbit in Ribbit.objects.filter(user=fuser.followed):
 				print ribbit.content
-				ribbits_buddies.append(ribbit)
+				ribbits_buddies.append(ribbit) 
+				# Here we should loop on "RibbitForFollowers" objects that the user have his key in
+				# and then decrypt it.
 		# ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
 		print ribbits_buddies
 		ribbits = ribbits_self + ribbits_buddies
@@ -133,6 +135,10 @@ def submit(request):
 			ribbit.user = request.user
 			user_profile = UserProfile.objects.get(user=request.user)
 			ribbit.content = encrypt(ribbit.content,user_profile.private_key)
+			# Content should be hashed and added as "ribbit.content".
+			
+			# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
+			# new object in the "RibbitForFollowers" model.
 			ribbit.save()
 			return redirect(next_url)
 		else:
