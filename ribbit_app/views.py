@@ -67,28 +67,28 @@ def logout_view(request):
 	return redirect('/')
 
 def more_than_length(password):
-        return len(password) >= 6
+		return len(password) >= 6
 
 def less_than_length(password):
-    return len(password) <= 18
+	return len(password) <= 18
 
 def lowercase_check(password):
-    return len(set(string.ascii_lowercase).intersection(password)) > 0
+	return len(set(string.ascii_lowercase).intersection(password)) > 0
 
 def uppercase_check(password):
-    return len(set(string.ascii_uppercase).intersection(password)) > 0
+	return len(set(string.ascii_uppercase).intersection(password)) > 0
 
 def digit_check(password):
-    return len(set(string.digits).intersection(password)) > 0
+	return len(set(string.digits).intersection(password)) > 0
 
 def spcl_character_check(password):
-    return len(set(string.punctuation).intersection(password)) > 0
+	return len(set(string.punctuation).intersection(password)) > 0
 
 def password_entropy(password, tests):
-    for test in tests:
-        if not test(password):
-            return False
-    return True
+	for test in tests:
+		if not test(password):
+			return False
+	return True
 
 def signup(request):
 	user_form = UserCreateForm(data=request.POST)
@@ -206,7 +206,7 @@ def view_messages(request,username):
 						'next_url': u'/messages/%s/send_message' % (username)}
 		return render(request,'view_messages.html', output_dict)
 	except User.DoesNotExist:
-            raise Http404
+			raise Http404
 
 #what's missing that i shouldn't be able to send messages only to those i follow and follow me
 @login_required
@@ -244,49 +244,47 @@ def unfollow(request):
 	return redirect('/users/')
 
 def create_keys(bits):
-    keys = RSA.generate(bits)
-    return keys
+	keys = RSA.generate(bits)
+	return keys
 
 def get_private_key(keys):
-    private_key = keys.exportKey()
-    return private_key
+	private_key = keys.exportKey()
+	return private_key
 
 def get_public_key(keys):
-    public_key = keys.publickey().exportKey()
-    return public_key
+	public_key = keys.publickey().exportKey()
+	return public_key
 
-@login_required
 def encrypt(plain_text, key):
-    rsakey = RSA.importKey(key)
-    rsakey = PKCS1_OAEP.new(rsakey)
-    encrypted_text = rsakey.encrypt(plain_text)
-    return encrypted_text.encode('base64')
+	rsakey = RSA.importKey(key)
+	rsakey = PKCS1_OAEP.new(rsakey)
+	encrypted_text = rsakey.encrypt(plain_text)
+	return encrypted_text.encode('base64')
 
-@login_required
 def decrypt(encrypted_text, key):
-    rsakey = RSA.importKey(key) 
-    rsakey = PKCS1_OAEP.new(rsakey) 
-    plain_text = rsakey.decrypt(b64decode(encrypted_text)) 
-    return plain_text
+	rsakey = RSA.importKey(key) 
+	rsakey = PKCS1_OAEP.new(rsakey) 
+	plain_text = rsakey.decrypt(b64decode(encrypted_text)) 
+	return plain_text
 
 @login_required
 def add_signature(private_key, data):
-    rsakey = RSA.importKey(private_key) 
-    signature = PKCS1_v1_5.new(rsakey) 
-    sha256 = SHA256.new() 
-    # Data is already base64 encoded (as encrypted with the method 'encrypt')
-    sha256.update(b64decode(data)) 
-    signed_data = signature.sign(sha256) 
-    return b64encode(signed_data)
+	rsakey = RSA.importKey(private_key) 
+	signature = PKCS1_v1_5.new(rsakey) 
+	sha256 = SHA256.new() 
+	# Data is already base64 encoded (as encrypted with the method 'encrypt')
+	sha256.update(b64decode(data)) 
+	signed_data = signature.sign(sha256) 
+	return b64encode(signed_data)
 
 @login_required
 def verify_signature(public_key, signature, data):
-    rsakey = RSA.importKey(public_key) 
-    signature = PKCS1_v1_5.new(rsakey) 
-    sha256 = SHA256.new() 
-    # Data is already base64 encoded (as encrypted with the method 'encrypt')
-    sha256.update(b64decode(data)) 
-    if signature.verify(sha256, b64decode(signature)):
-        return True
-    return False
+	rsakey = RSA.importKey(public_key) 
+	signature = PKCS1_v1_5.new(rsakey) 
+	sha256 = SHA256.new() 
+	# Data is already base64 encoded (as encrypted with the method 'encrypt')
+	sha256.update(b64decode(data)) 
+	if signature.verify(sha256, b64decode(signature)):
+		return True
+	return False
 
