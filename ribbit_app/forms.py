@@ -50,4 +50,4 @@ class RibbitForm(forms.ModelForm):
 
     class Meta:
         model = Ribbit
-        exclude = ('user',)
+        exclude = ('user','d_sign','retweeted')

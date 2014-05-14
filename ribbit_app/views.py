@@ -133,8 +133,7 @@ def submit(request):
 		if ribbit_form.is_valid(): 
 			ribbit = ribbit_form.save(commit=False)
 			ribbit.user = request.user
-			user_profile = UserProfile.objects.get(user=request.user)
-			ribbit.content = encrypt(ribbit.content,user_profile.private_key)
+			ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
 			# Content should be hashed and added as "ribbit.content".
 			
 			# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
