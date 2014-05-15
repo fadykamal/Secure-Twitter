@@ -88,23 +88,21 @@ class Messages(models.Model):
 	receiver = models.ForeignKey(User, related_name='receiver')
 	content = models.CharField(max_length=2048)
 	creation_date = models.DateTimeField(auto_now=True, blank=True)
-	d_sign = models.CharField(max_length=128, default="")
+	d_sign = models.CharField(max_length=256, default="")
 
 	def __unicode__(self):
 		return u'%s %s %s' % (self.sender,":",self.content)
 
 	def digital_sign(self):
 		rec_enc = UserRibbitEncryption.objects.get(user = self.receiver)
-		self.d_sign = add_signature(self.sender.profile.private_key, encrypt(self.content, rec_enc.public_key))
+		self.d_sign = add_signature(self.sender.profile.private_key, b64encode(self.content))
 		self.save()
 
 	def digital_verify(self):
 		sender_enc = UserRibbitEncryption.objects.get(user = self.sender)
 		rec_enc = UserRibbitEncryption.objects.get(user = self.receiver)
-		ver = verify_signature(sender_enc.public_key, self.d_sign, encrypt(self.content, rec_enc.public_key))
-		print self.content
-		print ver
-		print '*****************************'
+		ver = verify_signature(sender_enc.public_key, self.d_sign, b64encode(self.content))
+		return ver
 		# user_enc = UserRibbitEncryption.objects.get(user = self.sender)
 		# print(user_enc.public_key)
 		# hashed = decrypt(self.d_sign, user_enc.public_key)
