@@ -190,8 +190,15 @@ def users(request, username="", ribbit_form=None):
 @login_required
 def messages(request):
 	try:
-		senders = [message.sender for message in Messages.objects.filter(receiver=request.user.id)]
-		output_dict = {'senders': list(set(senders))}
+		userlist1 = []
+		userlist2 = []
+		for follow in Follow.objects.filter(follower=request.user):
+			userlist1.append(follow.followed)
+		for follow in Follow.objects.filter(followed=request.user):
+			userlist2.append(follow.follower)
+		senders = list(set(userlist1) & set(userlist2))
+		#senders = [message.sender for message in Messages.objects.filter(receiver=request.user.id)]
+		output_dict = {'senders': senders}
 		return render(request,'messages.html', output_dict)
 	except User.DoesNotExist:
 			raise Http404

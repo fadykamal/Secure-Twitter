@@ -75,7 +75,7 @@ class Follow(models.Model):
 class FollowRequest(models.Model):
     follower = models.ForeignKey(User, related_name='rfollower')
     followed = models.ForeignKey(User, related_name='rfollowed')
-    requested = models.BooleanField(default=False)
+    #requested = models.BooleanField(default=False)
     answered = models.BooleanField(default=False)
     question = models.CharField(max_length=1024,blank=True,null=True)
     answer = models.CharField(max_length=1024,blank=True,null=True)
