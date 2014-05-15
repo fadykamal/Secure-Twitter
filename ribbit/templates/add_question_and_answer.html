@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+	<div class="panel left">
+		<h1>Qestions and Answes</h1>
+		{% for request in requests %}
+		<div class="messageWrapper">
+			<img class="avatar" src="{{ request.follower.profile.gravatar_url }}">
+			<form action="/questions/{{ request.follower.username }}/" method="POST">
+			{% csrf_token %}
+			Quesion: <input type="text" name="question">
+			Answer: <input type="text" name="answer">
+			<input type="submit" value="Send">
+			</form>
+		</div>
+		{% endfor %}
+	</div>
+
+{% endblock %}

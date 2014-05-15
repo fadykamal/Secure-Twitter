@@ -20,6 +20,11 @@ urlpatterns = patterns('',
     url(r'^messages$', 'ribbit_app.views.messages'),
     url(r'^messages/(?P<username>\w{0,30})/$', 'ribbit_app.views.view_messages'),
     url(r'^messages/(?P<username>\w{0,30})/send_message$', 'ribbit_app.views.send_message'),
+    #Challenge response part
+    url(r'^questions/$', 'ribbit_app.views.questions'),
+    url(r'^questions/(?P<username>\w{0,30})/$', 'ribbit_app.views.add_question_and_answer'),
+    url(r'^answers/(?P<username>\w{0,30})/$', 'ribbit_app.views.add_answers'),
+    url(r'^answers/$', 'ribbit_app.views.view_answers_page'),
     # url(r'^ribbit/', include('ribbit.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

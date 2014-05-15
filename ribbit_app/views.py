@@ -12,6 +12,8 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import PKCS1_v1_5 
 from Crypto.Hash import SHA256 
 from base64 import b64decode, b64encode
+from django.http import HttpResponse
+import bcrypt
 import string
 
 #don't forget to fix the commeted line
@@ -167,10 +169,13 @@ def users(request, username="", ribbit_form=None):
 		# 	print 'tryyyy'
 		# except:
 		# 	username2=''
-		if username == request.user.username or Follow.objects.filter(follower=request.user,followed=User.objects.get(username=username)):#username2:# or Follow.objects.get(follower=request.user,followed=User.objects.get(username=username)).followed.username:
+		#FollowRequest.objects.filter(follower=request.user,followed=User.objects.get(username=username))
+		if username == request.user.username or FollowRequest.objects.filter(follower=request.user,followed=User.objects.get(username=username)) or Follow.objects.filter(follower=request.user,followed=User.objects.get(username=username)):
+		#username2:# or Follow.objects.get(follower=request.user,followed=User.objects.get(username=username)).followed.username:
 		#or request.user.profile.follows.filter(user__username=username):
 			# Self Profile
 			return render(request, 'user.html', {'user': user, 'ribbits': ribbits, })
+		########################################################################################elif just requested
 		return render(request, 'user.html', {'user': user, 'ribbits': ribbits, 'follow': True, })
 	users = User.objects.all().annotate(ribbit_count=Count('ribbit'))
 	ribbits = map(get_latest, users)
@@ -215,9 +220,56 @@ def send_message(request,username):
 	if 'sent_message' in request.POST and request.POST['sent_message']:
 		message = Messages.objects.create(sender=request.user, receiver=User.objects.get(username=username), content=request.POST['sent_message'])
 		message.digital_sign()
-		print 'haloloealaaa'
 		return redirect(u'/messages/%s' % (username))
 	else:
+		raise Http404
+
+@login_required
+def add_question_and_answer(request,username):
+	try:
+		if request.POST.get('question') != '' and request.POST.get('answer') != '':
+			hashed_answer = bcrypt.hashpw(request.POST.get('answer'), bcrypt.gensalt(10))
+			fr = FollowRequest.objects.get(follower=User.objects.get(username=username),followed=request.user)
+			fr.question = request.POST.get('question')
+			fr.answer = hashed_answer
+			fr.answered = True
+			fr.save()
+			return redirect('/questions/')
+	except:
+		raise Http404
+	# requests = FollowRequest.objects.filter(followed=request.user)
+	
+	# output_dict = {'requests': requests}#,
+	# 				#'next_url': u'/messages/%s/send_message' % (username)}
+	# return render(request,'add_question_and_answer.html', output_dict)
+
+@login_required
+def questions(request):
+	requests = FollowRequest.objects.filter(followed=request.user,answered=False)
+	output_dict = {'requests': requests}
+	return render(request,'add_question_and_answer.html', output_dict)
+
+@login_required
+def add_answers(request,username):
+	try:
+		if request.POST.get('answer') != '':
+			fr = FollowRequest.objects.get(follower=request.user,followed=User.objects.get(username=username))
+			if bcrypt.hashpw(request.POST.get('answer'), fr.answer) == fr.answer:
+				FollowRequest.objects.get(follower=request.user,followed=User.objects.get(username=username)).delete()
+				Follow.objects.create(follower=request.user,followed=User.objects.get(username=username))
+				return redirect('/answers/')
+			else:
+				return redirect('/answers/')
+	except:
+		raise Http404
+
+@login_required
+def view_answers_page(request):
+	try:
+		requests = FollowRequest.objects.filter(follower=request.user,answered=True)
+		output_dict = {'requests': requests}
+		return render(request,'answers.html', output_dict)
+	except:
 		raise Http404
 
 @login_required
@@ -227,7 +279,8 @@ def follow(request):
 		if follow_id:
 			try:
 				user = User.objects.get(id=follow_id)
-				Follow.objects.create(follower=request.user,followed=user)
+				FollowRequest.objects.create(follower=request.user,followed=user)
+				#Follow.objects.create(follower=request.user,followed=user)
 			except ObjectDoesNotExist:
 				return redirect('/users/')
 	return redirect('/users/')
@@ -263,6 +316,7 @@ def unfollow(request):
 			try:
 				user = User.objects.get(id=unfollow_id)
 				Follow.objects.get(follower=request.user,followed=user).delete()
+				FollowRequest.objects.get(follower=request.user,followed=user).delete()
 			except ObjectDoesNotExist:
 				return redirect('/users/')
 	return redirect('/users/')
@@ -282,7 +336,7 @@ def get_public_key(keys):
 def encrypt(plain_text, key):
 	rsakey = RSA.importKey(key)
 	rsakey = PKCS1_OAEP.new(rsakey)
-	encrypted_text = rsakey.encrypt(plain_text)
+	encrypted_text = rsakey.encrypt(plain_text.encode('utf-8'))
 	return encrypted_text.encode('base64')
 
 def decrypt(encrypted_text, key):
