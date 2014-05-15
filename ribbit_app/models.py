@@ -12,7 +12,7 @@ def encrypt(plain_text, key):
     rsakey = RSA.importKey(key)
     rsakey = PKCS1_OAEP.new(rsakey)
     encrypted_text = rsakey.encrypt(plain_text)
-    return b64encode(encrypted_text)
+    return encrypted_text.encode('base64')
 
 def decrypt(encrypted_text, key):
     rsakey = RSA.importKey(key) 

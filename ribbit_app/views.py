@@ -204,7 +204,7 @@ def view_messages(request,username):
 		messages.sort(key=lambda x: x.creation_date, reverse=False)
 		output_dict = {'messages': messages,
 						'next_url': u'/messages/%s/send_message' % (username)}
-		# messages[0].digital_verify()
+		messages[0].digital_verify()
 		return render(request,'view_messages.html', output_dict)
 	except User.DoesNotExist:
 			raise Http404
@@ -231,6 +231,29 @@ def follow(request):
 			except ObjectDoesNotExist:
 				return redirect('/users/')
 	return redirect('/users/')
+
+@login_required
+def reribbit(request):
+	org_rib = Ribbit.objects.get(id = request.GET.get('r'))
+	print('************************************')
+	print org_rib.content
+	new_r = Ribbit(content = org_rib.content, user = request.user, d_sign = org_rib.d_sign)
+	new_r.retweeted = 6
+	new_r.save()
+	# ribbit_form = RibbitForm(data=request.POST)
+	# next_url = request.POST.get("next_url", "/")
+	# if ribbit_form.is_valid(): 
+	# 	ribbit = ribbit_form.save(commit=False)
+	# 	ribbit.user = request.user
+	# 	ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
+	# 	# Content should be hashed and added as "ribbit.content".
+		
+	# 	# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
+	# 	# new object in the "RibbitForFollowers" model.
+	# 	ribbit.save()
+	# 	return redirect(next_url)
+
+	return redirect('/')
 
 @login_required
 def unfollow(request):

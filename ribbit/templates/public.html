@@ -21,6 +21,7 @@
             <span class="name">{{ ribbit.user.first_name }}</span>@{{ ribbit.user.username }}
             <span class="time">{{ ribbit.creation_date|timesince }}</span>
             <p>{{ ribbit.content }}</p>
+            <a href="/reribbit?r={{ribbit.id}}">ReRibbit</a>
         </div>
         {% endfor %}
     </div>
