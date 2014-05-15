@@ -11,7 +11,7 @@ import bcrypt
 def encrypt(plain_text, key):
     rsakey = RSA.importKey(key)
     rsakey = PKCS1_OAEP.new(rsakey)
-    encrypted_text = rsakey.encrypt(plain_text)
+    encrypted_text = rsakey.encrypt(plain_text.encode('utf-8'))
     return encrypted_text.encode('base64')
 
 def decrypt(encrypted_text, key):
@@ -31,11 +31,12 @@ def add_signature(private_key, data):
 
 def verify_signature(public_key, signature, data):
     rsakey = RSA.importKey(public_key) 
-    signature = PKCS1_v1_5.new(rsakey) 
+    pk_signature = PKCS1_v1_5.new(rsakey) 
     sha256 = SHA256.new() 
     # Data is already base64 encoded (as encrypted with the method 'encrypt')
     sha256.update(b64decode(data)) 
-    if signature.verify(sha256, b64decode(signature)):
+
+    if pk_signature.verify(sha256, b64decode(signature)):
         return True
     return False
 
@@ -100,7 +101,10 @@ class Messages(models.Model):
 	def digital_verify(self):
 		sender_enc = UserRibbitEncryption.objects.get(user = self.sender)
 		rec_enc = UserRibbitEncryption.objects.get(user = self.receiver)
-		return verify_signature(user_enc.public_key, self.d_sign, self.content)
+		ver = verify_signature(sender_enc.public_key, self.d_sign, encrypt(self.content, rec_enc.public_key))
+		print self.content
+		print ver
+		print '*****************************'
 		# user_enc = UserRibbitEncryption.objects.get(user = self.sender)
 		# print(user_enc.public_key)
 		# hashed = decrypt(self.d_sign, user_enc.public_key)

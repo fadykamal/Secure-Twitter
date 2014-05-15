@@ -337,7 +337,7 @@ def encrypt(plain_text, key):
 	rsakey = RSA.importKey(key)
 	rsakey = PKCS1_OAEP.new(rsakey)
 	encrypted_text = rsakey.encrypt(plain_text.encode('utf-8'))
-	return encrypted_text.encode('base64')
+	return b64encode(encrypted_text)
 
 def decrypt(encrypted_text, key):
 	rsakey = RSA.importKey(key) 
@@ -362,6 +362,7 @@ def verify_signature(public_key, signature, data):
 	sha256 = SHA256.new() 
 	# Data is already base64 encoded (as encrypted with the method 'encrypt')
 	sha256.update(b64decode(data)) 
+	print signature
 	if signature.verify(sha256, b64decode(signature)):
 		return True
 	return False
