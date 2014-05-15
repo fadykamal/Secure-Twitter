@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+	<div class="panel left">
+		<h1>Answes</h1>
+		{% for request in requests %}
+		<div class="messageWrapper">
+			<img class="avatar" src="{{ request.followed.profile.gravatar_url }}">
+			{{request.question}}
+			<form action="/answers/{{ request.followed.username }}/" method="POST">
+			{% csrf_token %}
+			Answer: <input type="text" name="answer">
+			<input type="submit" value="Send">
+			</form>
+		</div>
+		{% endfor %}
+	</div>
+
+{% endblock %}
