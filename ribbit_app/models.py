@@ -40,9 +40,16 @@ def verify_signature(public_key, signature, data):
     return False
 
 class Ribbit(models.Model):
-	content = models.CharField(max_length=140)
+	content = models.CharField(max_length=140) # This should be stored hashed
 	user = models.ForeignKey(User)
 	creation_date = models.DateTimeField(auto_now=True, blank=True)
+	d_sign = models.CharField(max_length=128, default="")
+	retweeted = models.IntegerField(default=0)
+
+class RibbitForFollowers(models.Model):
+	public_key = models.CharField(max_length=140)
+	encrypted_content = models.ForeignKey(User)
+	d_sign = models.CharField(max_length=128, default="")
 
 class UserRibbitEncryption(models.Model):
 	user = models.OneToOneField(User)

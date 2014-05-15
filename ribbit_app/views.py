@@ -12,6 +12,7 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import PKCS1_v1_5 
 from Crypto.Hash import SHA256 
 from base64 import b64decode, b64encode
+import string
 
 #don't forget to fix the commeted line
 def index(request, auth_form=None, user_form=None):
@@ -26,7 +27,9 @@ def index(request, auth_form=None, user_form=None):
 		for fuser in Follow.objects.filter(follower=request.user):
 			for ribbit in Ribbit.objects.filter(user=fuser.followed):
 				print ribbit.content
-				ribbits_buddies.append(ribbit)
+				ribbits_buddies.append(ribbit) 
+				# Here we should loop on "RibbitForFollowers" objects that the user have his key in
+				# and then decrypt it.
 		# ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
 		print ribbits_buddies
 		ribbits = ribbits_self + ribbits_buddies
@@ -63,23 +66,50 @@ def logout_view(request):
 	logout(request)
 	return redirect('/')
 
+def more_than_length(password):
+		return len(password) >= 6
+
+def less_than_length(password):
+	return len(password) <= 18
+
+def lowercase_check(password):
+	return len(set(string.ascii_lowercase).intersection(password)) > 0
+
+def uppercase_check(password):
+	return len(set(string.ascii_uppercase).intersection(password)) > 0
+
+def digit_check(password):
+	return len(set(string.digits).intersection(password)) > 0
+
+def spcl_character_check(password):
+	return len(set(string.punctuation).intersection(password)) > 0
+
+def password_entropy(password, tests):
+	for test in tests:
+		if not test(password):
+			return False
+	return True
+
 def signup(request):
 	user_form = UserCreateForm(data=request.POST)
 	if request.method == 'POST':
 		if user_form.is_valid():
 			username = user_form.clean_username()
 			password = user_form.clean_password2()
-			user_form.save()
-			user = authenticate(username=username, password=password)
-			keys = create_keys(bits=1024)
-			user_profile = user.profile
-			user_profile.private_key = get_private_key(keys)
-			public_key_object = user.enc
-			public_key_object.public_key = get_public_key(keys)
-			public_key_object.save()
-			user_profile.save()
-			login(request, user)
-			return redirect('/')
+			if(password_entropy(password=password, tests=[more_than_length, less_than_length, lowercase_check, uppercase_check, digit_check, spcl_character_check])):
+				user_form.save()
+				user = authenticate(username=username, password=password)
+				keys = create_keys(bits=1024)
+				user_profile = user.profile
+				user_profile.private_key = get_private_key(keys)
+				public_key_object = user.enc
+				public_key_object.public_key = get_public_key(keys)
+				public_key_object.save()
+				user_profile.save()
+				login(request, user)
+				return redirect('/')
+			else:
+				return index(request, user_form=user_form)	
 		else:
 			return index(request, user_form=user_form)
 	return redirect('/')
@@ -100,11 +130,14 @@ def submit(request):
 	if request.method == "POST":
 		ribbit_form = RibbitForm(data=request.POST)
 		next_url = request.POST.get("next_url", "/")
-		if ribbit_form.is_valid():
+		if ribbit_form.is_valid(): 
 			ribbit = ribbit_form.save(commit=False)
 			ribbit.user = request.user
-			user_profile = UserProfile.objects.get(user=request.user)
-			ribbit.content = encrypt(ribbit.content,user_profile.private_key)
+			ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
+			# Content should be hashed and added as "ribbit.content".
+			
+			# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
+			# new object in the "RibbitForFollowers" model.
 			ribbit.save()
 			return redirect(next_url)
 		else:
@@ -174,7 +207,7 @@ def view_messages(request,username):
 		# messages[0].digital_verify()
 		return render(request,'view_messages.html', output_dict)
 	except User.DoesNotExist:
-            raise Http404
+			raise Http404
 
 #what's missing that i shouldn't be able to send messages only to those i follow and follow me
 @login_required
@@ -212,49 +245,47 @@ def unfollow(request):
 	return redirect('/users/')
 
 def create_keys(bits):
-    keys = RSA.generate(bits)
-    return keys
+	keys = RSA.generate(bits)
+	return keys
 
 def get_private_key(keys):
-    private_key = keys.exportKey()
-    return private_key
+	private_key = keys.exportKey()
+	return private_key
 
 def get_public_key(keys):
-    public_key = keys.publickey().exportKey()
-    return public_key
+	public_key = keys.publickey().exportKey()
+	return public_key
 
-@login_required
 def encrypt(plain_text, key):
-    rsakey = RSA.importKey(key)
-    rsakey = PKCS1_OAEP.new(rsakey)
-    encrypted_text = rsakey.encrypt(message)
-    return encrypted_text.encode('base64')
+	rsakey = RSA.importKey(key)
+	rsakey = PKCS1_OAEP.new(rsakey)
+	encrypted_text = rsakey.encrypt(plain_text)
+	return encrypted_text.encode('base64')
 
-@login_required
 def decrypt(encrypted_text, key):
-    rsakey = RSA.importKey(key) 
-    rsakey = PKCS1_OAEP.new(rsakey) 
-    plain_text = rsakey.decrypt(b64decode(data)) 
-    return plain_text
+	rsakey = RSA.importKey(key) 
+	rsakey = PKCS1_OAEP.new(rsakey) 
+	plain_text = rsakey.decrypt(b64decode(encrypted_text)) 
+	return plain_text
 
 @login_required
 def add_signature(private_key, data):
-    rsakey = RSA.importKey(private_key) 
-    signature = PKCS1_v1_5.new(rsakey) 
-    sha256 = SHA256.new() 
-    # Data is already base64 encoded (as encrypted with the method 'encrypt')
-    sha256.update(b64decode(data)) 
-    signed_data = signature.sign(sha256) 
-    return b64encode(signed_data)
+	rsakey = RSA.importKey(private_key) 
+	signature = PKCS1_v1_5.new(rsakey) 
+	sha256 = SHA256.new() 
+	# Data is already base64 encoded (as encrypted with the method 'encrypt')
+	sha256.update(b64decode(data)) 
+	signed_data = signature.sign(sha256) 
+	return b64encode(signed_data)
 
 @login_required
 def verify_signature(public_key, signature, data):
-    rsakey = RSA.importKey(public_key) 
-    signature = PKCS1_v1_5.new(rsakey) 
-    sha256 = SHA256.new() 
-    # Data is already base64 encoded (as encrypted with the method 'encrypt')
-    sha256.update(b64decode(data)) 
-    if signature.verify(sha256, b64decode(signature)):
-        return True
-    return False
+	rsakey = RSA.importKey(public_key) 
+	signature = PKCS1_v1_5.new(rsakey) 
+	sha256 = SHA256.new() 
+	# Data is already base64 encoded (as encrypted with the method 'encrypt')
+	sha256.update(b64decode(data)) 
+	if signature.verify(sha256, b64decode(signature)):
+		return True
+	return False
 
