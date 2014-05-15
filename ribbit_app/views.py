@@ -216,7 +216,7 @@ def view_messages(request,username):
 		messages.sort(key=lambda x: x.creation_date, reverse=False)
 		output_dict = {'messages': messages,
 						'next_url': u'/messages/%s/send_message' % (username)}
-		messages[0].digital_verify()
+		#messages[0].digital_verify()
 		return render(request,'view_messages.html', output_dict)
 	except User.DoesNotExist:
 			raise Http404
