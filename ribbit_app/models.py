@@ -1,7 +1,43 @@
 from django.db import models
 from django.contrib.auth.models import User
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Signature import PKCS1_v1_5 
+from Crypto.Hash import SHA256 
+from base64 import b64decode, b64encode
 import hashlib
 import bcrypt
+
+def encrypt(plain_text, key):
+    rsakey = RSA.importKey(key)
+    rsakey = PKCS1_OAEP.new(rsakey)
+    encrypted_text = rsakey.encrypt(plain_text)
+    return b64encode(encrypted_text)
+
+def decrypt(encrypted_text, key):
+    rsakey = RSA.importKey(key) 
+    rsakey = PKCS1_OAEP.new(rsakey) 
+    plain_text = rsakey.decrypt(b64decode(encrypted_text)) 
+    return plain_text
+
+def add_signature(private_key, data):
+    rsakey = RSA.importKey(private_key) 
+    signature = PKCS1_v1_5.new(rsakey) 
+    sha256 = SHA256.new() 
+    # Data is already base64 encoded (as encrypted with the method 'encrypt')
+    sha256.update(b64decode(data)) 
+    signed_data = signature.sign(sha256) 
+    return b64encode(signed_data)
+
+def verify_signature(public_key, signature, data):
+    rsakey = RSA.importKey(public_key) 
+    signature = PKCS1_v1_5.new(rsakey) 
+    sha256 = SHA256.new() 
+    # Data is already base64 encoded (as encrypted with the method 'encrypt')
+    sha256.update(b64decode(data)) 
+    if signature.verify(sha256, b64decode(signature)):
+        return True
+    return False
 
 class Ribbit(models.Model):
 	content = models.CharField(max_length=140)
@@ -33,21 +69,27 @@ class Messages(models.Model):
 	receiver = models.ForeignKey(User, related_name='receiver')
 	content = models.CharField(max_length=2048)
 	creation_date = models.DateTimeField(auto_now=True, blank=True)
-	salt = models.CharField(max_length=64, default="")
 	d_sign = models.CharField(max_length=128, default="")
 
 	def __unicode__(self):
 		return u'%s %s %s' % (self.sender,":",self.content)
 
 	def digital_sign(self):
-		salt = bcrypt.gensalt()
-		sign = bcrypt.hashpw(self.content.encode('utf-8'),
-                salt)
-
-		self.salt = salt
-		self.d_sign = sign
+		rec_enc = UserRibbitEncryption.objects.get(user = self.receiver)
+		self.d_sign = add_signature(self.sender.profile.private_key, encrypt(self.content, rec_enc.public_key))
 		self.save()
-		return sign
+
+	def digital_verify(self):
+		sender_enc = UserRibbitEncryption.objects.get(user = self.sender)
+		rec_enc = UserRibbitEncryption.objects.get(user = self.receiver)
+		return verify_signature(user_enc.public_key, self.d_sign, self.content)
+		# user_enc = UserRibbitEncryption.objects.get(user = self.sender)
+		# print(user_enc.public_key)
+		# hashed = decrypt(self.d_sign, user_enc.public_key)
+		# match = (hashed == bcrypt.hashpw(self.content.encode('utf-8'), hashed))
+		# print(match)
+		# print('**************************************')
+		# return match
 
 User.profile = property(lambda u: UserProfile.objects.get_or_create(user=u)[0])
 User.enc = property(lambda u: UserRibbitEncryption.objects.get_or_create(user=u)[0])
