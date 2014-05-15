@@ -231,9 +231,12 @@ def add_answers(request,username):
 
 @login_required
 def view_answers_page(request):
-	requests = FollowRequest.objects.filter(follower=request.user,answered=True)
-	output_dict = {'requests': requests}
-	return render(request,'answers.html', output_dict)
+	try:
+		requests = FollowRequest.objects.filter(follower=request.user,answered=True)
+		output_dict = {'requests': requests}
+		return render(request,'answers.html', output_dict)
+	except:
+		raise Http404
 
 @login_required
 def follow(request):
