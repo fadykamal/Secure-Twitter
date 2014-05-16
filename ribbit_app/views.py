@@ -23,18 +23,20 @@ def index(request, auth_form=None, user_form=None):
 		ribbit_form = RibbitForm()
 		user = request.user
 		ribbits_self = []
-		for qribbit in Ribbit.objects.filter(user=user.id):
+		# for qribbit in Ribbit.objects.filter(user=user.id):
+		for qribbit in RibbitForFollowers.objects.filter(public_key=request.user.public_key):
 			ribbits_self.append(qribbit)
-		ribbits_buddies = []
-		for fuser in Follow.objects.filter(follower=request.user):
-			for ribbit in Ribbit.objects.filter(user=fuser.followed):
-				print ribbit.content
-				ribbits_buddies.append(ribbit) 
+			# qribbit.digital_verify()
+		# ribbits_buddies = []
+		# for fuser in Follow.objects.filter(follower=request.user):
+		# 	for ribbit in RibbitForFollowers.objects.filter(public_key=request.user.public_key):
+		# 		# print ribbit.content
+		# 		ribbits_buddies.append(ribbit) 
 				# Here we should loop on "RibbitForFollowers" objects that the user have his key in
 				# and then decrypt it.
 		# ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
-		print ribbits_buddies
-		ribbits = ribbits_self + ribbits_buddies
+		# print ribbits_buddies
+		ribbits = ribbits_self
 		ribbits.sort(key=lambda x: x.creation_date, reverse=False)
 		return render(request,
 					  'buddies.html',
@@ -133,14 +135,28 @@ def submit(request):
 		ribbit_form = RibbitForm(data=request.POST)
 		next_url = request.POST.get("next_url", "/")
 		if ribbit_form.is_valid(): 
-			ribbit = ribbit_form.save(commit=False)
-			ribbit.user = request.user
-			ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
+			# ribbit = ribbit_form.save(commit=False)
+			content = ribbit_form.cleaned_data["content"]
+			ribbit = Ribbit(user = request.user)
+
+			ribbit.save()
+
+			followers = Follow.objects.filter(followed=request.user)
+
+			one_ribbit = RibbitForFollowers(ribbit=ribbit,public_key=request.user.public_key,encrypted_content=encrypt(content,request.user.public_key))
+			one_ribbit.save()
+
+			for follower in followers:
+				print follower.follower.public_key
+				ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=follower.follower.public_key,encrypted_content=encrypt(content,follower.follower.public_key))
+				ribbit_follow.save()
+			# ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
 			# Content should be hashed and added as "ribbit.content".
 			
 			# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
 			# new object in the "RibbitForFollowers" model.
-			ribbit.save()
+			# ribbit.digital_sign()
+			# ribbit.save()
 			return redirect(next_url)
 		else:
 			return public(request, ribbit_form)
