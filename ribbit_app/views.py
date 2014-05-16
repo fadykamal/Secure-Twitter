@@ -24,7 +24,8 @@ def index(request, auth_form=None, user_form=None):
 		user = request.user
 		ribbits_self = []
 		for qribbit in RibbitForFollowers.objects.filter(public_key=request.user.public_key):
-			ribbits_self.append(qribbit)
+			if qribbit.digital_verify():
+				ribbits_self.append(qribbit)
 		ribbits = ribbits_self
 		ribbits.sort(key=lambda x: x.creation_date, reverse=False)
 		return render(request,
@@ -133,10 +134,12 @@ def submit(request):
 			followers = Follow.objects.filter(followed=request.user)
 
 			one_ribbit = RibbitForFollowers(ribbit=ribbit,public_key=request.user.public_key,encrypted_content=encrypt(content,request.user.public_key))
+			one_ribbit.digital_sign()
 			one_ribbit.save()
 
 			for follower in followers:
 				ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=follower.follower.public_key,encrypted_content=encrypt(content,follower.follower.public_key))
+				ribbit_follow.digital_sign()
 				ribbit_follow.save()
 			return redirect(next_url)
 		else:
@@ -250,6 +253,7 @@ def add_answers(request,username):
 					my_ribbit = RibbitForFollowers.objects.get(ribbit=ribbit,public_key=followed.public_key)
 					content = decrypt(my_ribbit.encrypted_content, followed.profile.private_key)
 					ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=request.user.public_key,encrypted_content=encrypt(content,request.user.public_key))
+					ribbit_follow.digital_sign()
 					ribbit_follow.save()
 				return redirect('/answers/')
 			else:

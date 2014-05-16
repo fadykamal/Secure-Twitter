@@ -52,8 +52,6 @@ class Ribbit(models.Model):
 	def digital_verify(self):
 		user_enc = UserRibbitEncryption.objects.get(user = self.user)
 		ver = verify_signature(user_enc.public_key, self.d_sign, b64encode(self.content))
-		print ver
-		print '*****************************'
 		return ver
 
 class RibbitForFollowers(models.Model):
@@ -64,14 +62,13 @@ class RibbitForFollowers(models.Model):
 	creation_date = models.DateTimeField(auto_now=True, blank=True)
 
 	def digital_sign(self):
-		self.d_sign = add_signature(self.user.profile.private_key, b64encode(self.encrypted_content))
+		user = UserRibbitEncryption.objects.get(public_key=self.public_key).user
+		self.d_sign = add_signature(user.profile.private_key, b64encode(self.encrypted_content))
 		self.save()
 
 	def digital_verify(self):
 		user_enc = UserRibbitEncryption.objects.get(user = self.user)
-		ver = verify_signature(user_enc.public_key, self.d_sign, b64encode(self.encrypted_content))
-		print ver
-		print '*****************************'
+		ver = verify_signature(self.public_key, self.d_sign, b64encode(self.encrypted_content))
 		return ver
 
 class UserRibbitEncryption(models.Model):

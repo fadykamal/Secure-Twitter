@@ -27,7 +27,7 @@
                 <span class="spacing">{{ user.profile.followed_by.count }} Followers</span>
                 <span class="spacing">{{ user.profile.follows.count }} Following</span>
             </p>
-            <p>{{ ribbit.content }}</p>
+            <p>{{ username }}</p>
             <a href="/reribbit?r={{ribbit.id}}">ReRibbit</a>
         </div>
         {% endfor %}

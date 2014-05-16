@@ -34,7 +34,7 @@
             {% endif %}
         </div>
     </div>
-
+    {% if not follow %}
     <div class="panel left">
         <h1>{{ user.first_name }}'s Ribbits</h1>
         {% for ribbit in ribbits %}
@@ -45,8 +45,9 @@
             </a>
             @{{ ribbit.user.username }}
             <span class="time">{{ ribbit.creation_date|timesince }}</span>
-            <p>{{ ribbit.content }}</p>
+            <p>{{ ribbit }}</p>
         </div>
         {% endfor %}
     </div>
+    {% endif %}
 {% endblock %}
