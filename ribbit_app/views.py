@@ -285,10 +285,29 @@ def follow(request):
 
 @login_required
 def reribbit(request):
-	org_rib = Ribbit.objects.get(id = request.GET.get('r'))
-	new_r = Ribbit(content = org_rib.content, user = request.user, d_sign = org_rib.d_sign)
-	new_r.retweeted = 6
-	new_r.save()
+	org_rib = RibbitForFollowers.objects.get(id = request.GET.get('r')).ribbit
+	org_rib_follow = RibbitForFollowers(ribbit=org_rib,public_key=request.user.public_key)
+
+	content = decrypt(org_rib_follow.encrypted_content,request.user.public_key)
+	ribbit = Ribbit(user = request.user)
+
+	ribbit.retweeted = request.GET.get('r')
+	ribbit.save()
+
+	followers = Follow.objects.filter(followed=request.user)
+
+	
+	one_ribbit = RibbitForFollowers(ribbit=ribbit,public_key=request.user.public_key,encrypted_content=encrypt(content,request.user.public_key))
+	one_ribbit.digital_sign()
+	one_ribbit.save()
+
+	for follower in followers:
+		ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=follower.follower.public_key,encrypted_content=encrypt(content,follower.follower.public_key))
+		ribbit_follow.digital_sign()
+		ribbit_follow.save()
+
+	# new_r = Ribbit(content = org_rib.content, user = request.user, d_sign = org_rib.d_sign)
+
 	return redirect('/')
 
 @login_required

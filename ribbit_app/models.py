@@ -58,7 +58,7 @@ class RibbitForFollowers(models.Model):
 	ribbit = models.ForeignKey(Ribbit)
 	public_key = models.CharField(max_length=140)
 	encrypted_content = models.CharField(max_length=140)
-	d_sign = models.CharField(max_length=128, default="")
+	d_sign = models.CharField(max_length=256, default="")
 	creation_date = models.DateTimeField(auto_now=True, blank=True)
 
 	def digital_sign(self):

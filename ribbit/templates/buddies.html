@@ -31,6 +31,7 @@
                 <p>
                     {{ ribbit.content }}
                 </p>
+                <a href="/reribbit?r={{ribbit.id}}">ReRibbit</a>
             </div>
         {% else %}
             {{ ribbit.ribbit.user.first_name }} Retweeted this
@@ -42,7 +43,6 @@
                 @{{ ribbit.ribbit.original_user.username }}
                 <p>
                     {{ ribbit.content }}
-                    ll
                 </p>
             </div>
         {% endif %}
