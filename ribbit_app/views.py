@@ -147,7 +147,6 @@ def submit(request):
 			one_ribbit.save()
 
 			for follower in followers:
-				print follower.follower.public_key
 				ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=follower.follower.public_key,encrypted_content=encrypt(content,follower.follower.public_key))
 				ribbit_follow.save()
 			# ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
@@ -280,7 +279,23 @@ def add_answers(request,username):
 			fr = FollowRequest.objects.get(follower=request.user,followed=User.objects.get(username=username))
 			if bcrypt.hashpw(request.POST.get('answer'), fr.answer) == fr.answer:
 				FollowRequest.objects.get(follower=request.user,followed=User.objects.get(username=username)).delete()
-				Follow.objects.create(follower=request.user,followed=User.objects.get(username=username))
+				followed=User.objects.get(username=username)
+				Follow.objects.create(follower=request.user,followed=followed)
+				old_ribbits = Ribbit.objects.filter(user=followed)
+				print old_ribbits
+				for ribbit in old_ribbits:
+					print "old_ribbit"
+					print ribbit
+					my_ribbit = RibbitForFollowers.objects.get(ribbit=ribbit,public_key=followed.public_key)
+					print "my_ribbit"
+					print my_ribbit
+					content = decrypt(my_ribbit.encrypted_content, followed.profile.private_key)
+					print "content"
+					print content
+					ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=request.user.public_key,encrypted_content=encrypt(content,request.user.public_key))
+					print "ribbit_follow"
+					print ribbit_follow
+					ribbit_follow.save()
 				return redirect('/answers/')
 			else:
 				return redirect('/answers/')
@@ -341,6 +356,11 @@ def unfollow(request):
 				user = User.objects.get(id=unfollow_id)
 				Follow.objects.get(follower=request.user,followed=user).delete()
 				FollowRequest.objects.get(follower=request.user,followed=user).delete()
+				old_ribbits = Ribbit.objects.filter(user=user)
+				print "old_ribbits"
+				for ribbit in old_ribbits:
+					my_ribbit = RibbitForFollowers.objects.get(ribbit=ribbit,public_key=user.public_key)
+					my_ribbit.delete()
 			except ObjectDoesNotExist:
 				return redirect('/users/')
 	return redirect('/users/')
