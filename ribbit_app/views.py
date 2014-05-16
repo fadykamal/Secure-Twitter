@@ -368,12 +368,11 @@ def add_signature(private_key, data):
 @login_required
 def verify_signature(public_key, signature, data):
 	rsakey = RSA.importKey(public_key) 
-	signature = PKCS1_v1_5.new(rsakey) 
+	sign = PKCS1_v1_5.new(rsakey) 
 	sha256 = SHA256.new() 
 	# Data is already base64 encoded (as encrypted with the method 'encrypt')
 	sha256.update(b64decode(data)) 
-	print signature
-	if signature.verify(sha256, b64decode(signature)):
+	if sign.verify(sha256, b64decode(signature)):
 		return True
 	return False
 
