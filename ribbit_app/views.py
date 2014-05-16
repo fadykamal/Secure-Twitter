@@ -23,19 +23,8 @@ def index(request, auth_form=None, user_form=None):
 		ribbit_form = RibbitForm()
 		user = request.user
 		ribbits_self = []
-		# for qribbit in Ribbit.objects.filter(user=user.id):
 		for qribbit in RibbitForFollowers.objects.filter(public_key=request.user.public_key):
 			ribbits_self.append(qribbit)
-			# qribbit.digital_verify()
-		# ribbits_buddies = []
-		# for fuser in Follow.objects.filter(follower=request.user):
-		# 	for ribbit in RibbitForFollowers.objects.filter(public_key=request.user.public_key):
-		# 		# print ribbit.content
-		# 		ribbits_buddies.append(ribbit) 
-				# Here we should loop on "RibbitForFollowers" objects that the user have his key in
-				# and then decrypt it.
-		# ribbits_buddies = Ribbit.objects.filter(user__userprofile__in=user.profile.follows.all)
-		# print ribbits_buddies
 		ribbits = ribbits_self
 		ribbits.sort(key=lambda x: x.creation_date, reverse=False)
 		return render(request,
@@ -149,13 +138,6 @@ def submit(request):
 			for follower in followers:
 				ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=follower.follower.public_key,encrypted_content=encrypt(content,follower.follower.public_key))
 				ribbit_follow.save()
-			# ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
-			# Content should be hashed and added as "ribbit.content".
-			
-			# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
-			# new object in the "RibbitForFollowers" model.
-			# ribbit.digital_sign()
-			# ribbit.save()
 			return redirect(next_url)
 		else:
 			return public(request, ribbit_form)
@@ -172,25 +154,14 @@ def get_latest(user):
 @login_required
 def users(request, username="", ribbit_form=None):
 	if username:
-		# Show a profile
 		try:
 			user = User.objects.get(username=username)
 		except User.DoesNotExist:
 			raise Http404
 		ribbits = Ribbit.objects.filter(user=user.id)
-		# username2=''
-		# try:
-		# 	username2=Follow.objects.filter(follower=request.user,followed=User.objects.get(username=username))
-		# 	print 'tryyyy'
-		# except:
-		# 	username2=''
-		#FollowRequest.objects.filter(follower=request.user,followed=User.objects.get(username=username))
 		if username == request.user.username or FollowRequest.objects.filter(follower=request.user,followed=User.objects.get(username=username)) or Follow.objects.filter(follower=request.user,followed=User.objects.get(username=username)):
-		#username2:# or Follow.objects.get(follower=request.user,followed=User.objects.get(username=username)).followed.username:
-		#or request.user.profile.follows.filter(user__username=username):
-			# Self Profile
+
 			return render(request, 'user.html', {'user': user, 'ribbits': ribbits, })
-		########################################################################################elif just requested
 		return render(request, 'user.html', {'user': user, 'ribbits': ribbits, 'follow': True, })
 	users = User.objects.all().annotate(ribbit_count=Count('ribbit'))
 	ribbits = map(get_latest, users)
@@ -220,8 +191,6 @@ def messages(request):
 
 @login_required
 def view_messages(request,username):
-	#print User.objects.get(id=request.user.id).profile.follows.objects.get(id=request.user.id)
-	#print UserProfile.objects.get(user=request.user).follows.all()
 	try:
 		if request.user.id == User.objects.get(username=username).id:
 			raise Http404
@@ -260,11 +229,6 @@ def add_question_and_answer(request,username):
 			return redirect('/questions/')
 	except:
 		raise Http404
-	# requests = FollowRequest.objects.filter(followed=request.user)
-	
-	# output_dict = {'requests': requests}#,
-	# 				#'next_url': u'/messages/%s/send_message' % (username)}
-	# return render(request,'add_question_and_answer.html', output_dict)
 
 @login_required
 def questions(request):
@@ -282,19 +246,10 @@ def add_answers(request,username):
 				followed=User.objects.get(username=username)
 				Follow.objects.create(follower=request.user,followed=followed)
 				old_ribbits = Ribbit.objects.filter(user=followed)
-				print old_ribbits
 				for ribbit in old_ribbits:
-					print "old_ribbit"
-					print ribbit
 					my_ribbit = RibbitForFollowers.objects.get(ribbit=ribbit,public_key=followed.public_key)
-					print "my_ribbit"
-					print my_ribbit
 					content = decrypt(my_ribbit.encrypted_content, followed.profile.private_key)
-					print "content"
-					print content
 					ribbit_follow = RibbitForFollowers(ribbit=ribbit,public_key=request.user.public_key,encrypted_content=encrypt(content,request.user.public_key))
-					print "ribbit_follow"
-					print ribbit_follow
 					ribbit_follow.save()
 				return redirect('/answers/')
 			else:
@@ -327,24 +282,9 @@ def follow(request):
 @login_required
 def reribbit(request):
 	org_rib = Ribbit.objects.get(id = request.GET.get('r'))
-	print('************************************')
-	print org_rib.content
 	new_r = Ribbit(content = org_rib.content, user = request.user, d_sign = org_rib.d_sign)
 	new_r.retweeted = 6
 	new_r.save()
-	# ribbit_form = RibbitForm(data=request.POST)
-	# next_url = request.POST.get("next_url", "/")
-	# if ribbit_form.is_valid(): 
-	# 	ribbit = ribbit_form.save(commit=False)
-	# 	ribbit.user = request.user
-	# 	ribbit.content = encrypt(ribbit.content,request.user.profile.private_key)
-	# 	# Content should be hashed and added as "ribbit.content".
-		
-	# 	# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
-	# 	# new object in the "RibbitForFollowers" model.
-	# 	ribbit.save()
-	# 	return redirect(next_url)
-
 	return redirect('/')
 
 @login_required
@@ -355,19 +295,11 @@ def unfollow(request):
 			try:
 				user = User.objects.get(id=unfollow_id)
 				Follow.objects.get(follower=request.user,followed=user).delete()
-				print "try"
 				old_ribbits = Ribbit.objects.filter(user=user)
-				print "old_ribbits"
-				print old_ribbits
 				for ribbit in old_ribbits:
-					print "ribbit"
-					print ribbit
 					my_ribbit = RibbitForFollowers.objects.get(ribbit=ribbit,public_key=request.user.public_key)
-					print "my_ribbit"
-					print my_ribbit
 					my_ribbit.delete()
 				FollowRequest.objects.get(follower=request.user,followed=user).delete()
-				print "try"
 				
 			except ObjectDoesNotExist:
 				return redirect('/users/')
