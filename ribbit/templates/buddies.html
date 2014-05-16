@@ -21,16 +21,30 @@
     <div class="panel left">
         <h1>Buddies' Ribbits</h1>
         {% for ribbit in ribbits %}
-        <div class="ribbitWrapper">
-            <a href="/users/{{ ribbit.user.username }}">
-                <img class="avatar" src="{{ ribbit.user.profile.gravatar_url }}">
-                <span class="name">{{ ribbit.user.first_name }}</span>
-            </a>
-            @{{ ribbit.user.username }}
-            <p>
-                {{ ribbit.content }}
-            </p>
-        </div>
+        {% if ribbit.ribbit.retweeted == 0 %}
+            <div class="ribbitWrapper">
+                <a href="/users/{{ ribbit.ribbit.user.username }}">
+                    <img class="avatar" src="{{ ribbit.ribbit.user.profile.gravatar_url }}">
+                    <span class="name">{{ ribbit.ribbit.user.first_name }}</span>
+                </a>
+                @{{ ribbit.ribbit.user.username }}
+                <p>
+                    {{ ribbit.content }}
+                </p>
+            </div>
+        {% else %}
+            {{ ribbit.ribbit.user.first_name }} Retweeted this
+            <div class="ribbitWrapper">
+                <a href="/users/{{ ribbit.ribbit.original_user.username }}">
+                    <img class="avatar" src="{{ ribbit.ribbit.original_user.profile.gravatar_url }}">
+                    <span class="name">{{ ribbit.ribbit.original_user.first_name }}</span>
+                </a>
+                @{{ ribbit.ribbit.original_user.username }}
+                <p>
+                    {{ ribbit.content }}
+                </p>
+            </div>
+        {% endif %}
         {% endfor %}
     </div>
 {% endblock %}

@@ -41,10 +41,8 @@ def verify_signature(public_key, signature, data):
     return False
 
 class Ribbit(models.Model):
-	content = models.CharField(max_length=140) # This should be stored hashed
 	user = models.ForeignKey(User)
 	creation_date = models.DateTimeField(auto_now=True, blank=True)
-	d_sign = models.CharField(max_length=128, default="")
 	retweeted = models.IntegerField(default=0)
 
 	def digital_sign(self):
@@ -59,9 +57,22 @@ class Ribbit(models.Model):
 		return ver
 
 class RibbitForFollowers(models.Model):
+	ribbit = models.ForeignKey(Ribbit)
 	public_key = models.CharField(max_length=140)
-	encrypted_content = models.ForeignKey(User)
+	encrypted_content = models.CharField(max_length=140)
 	d_sign = models.CharField(max_length=128, default="")
+	creation_date = models.DateTimeField(auto_now=True, blank=True)
+
+	def digital_sign(self):
+		self.d_sign = add_signature(self.user.profile.private_key, b64encode(self.encrypted_content))
+		self.save()
+
+	def digital_verify(self):
+		user_enc = UserRibbitEncryption.objects.get(user = self.user)
+		ver = verify_signature(user_enc.public_key, self.d_sign, b64encode(self.encrypted_content))
+		print ver
+		print '*****************************'
+		return ver
 
 class UserRibbitEncryption(models.Model):
 	user = models.OneToOneField(User)
@@ -115,5 +126,10 @@ class Messages(models.Model):
 		return ver
 
 User.profile = property(lambda u: UserProfile.objects.get_or_create(user=u)[0])
+User.public_key = property(lambda u: UserRibbitEncryption.objects.get_or_create(user=u)[0].public_key)
+RibbitForFollowers.get_rebbit = property(lambda u: (Ribbit.objects.get_or_create(id=u.id)[0]))
+RibbitForFollowers.user = property(lambda u: ((UserRibbitEncryption.objects.get_or_create(public_key=u.public_key)[0]).user))
+RibbitForFollowers.content = property(lambda u: (decrypt(u.encrypted_content, u.user.profile.private_key)))
 User.enc = property(lambda u: UserRibbitEncryption.objects.get_or_create(user=u)[0])
-
+Ribbit.get_rebbit = property(lambda u: Ribbit.objects.get_or_create(id=u.id)[0])
+Ribbit.original_user = property(lambda u: User.objects.get_or_create(id=u.retweeted)[0])
