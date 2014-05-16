@@ -15,6 +15,7 @@
 <img src="{{ STATIC_URL}}gfx/frog.jpg">
 <div class="panel right">
     <h1>New to Ribbit?</h1>
+    <p>The password must consist of capital letters, characters and numbers</p>
     <p>
         <form action="/signup" method="post">{% csrf_token %}
             {% for field in user_form %}
