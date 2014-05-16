@@ -355,12 +355,20 @@ def unfollow(request):
 			try:
 				user = User.objects.get(id=unfollow_id)
 				Follow.objects.get(follower=request.user,followed=user).delete()
-				FollowRequest.objects.get(follower=request.user,followed=user).delete()
+				print "try"
 				old_ribbits = Ribbit.objects.filter(user=user)
 				print "old_ribbits"
+				print old_ribbits
 				for ribbit in old_ribbits:
-					my_ribbit = RibbitForFollowers.objects.get(ribbit=ribbit,public_key=user.public_key)
+					print "ribbit"
+					print ribbit
+					my_ribbit = RibbitForFollowers.objects.get(ribbit=ribbit,public_key=request.user.public_key)
+					print "my_ribbit"
+					print my_ribbit
 					my_ribbit.delete()
+				FollowRequest.objects.get(follower=request.user,followed=user).delete()
+				print "try"
+				
 			except ObjectDoesNotExist:
 				return redirect('/users/')
 	return redirect('/users/')
