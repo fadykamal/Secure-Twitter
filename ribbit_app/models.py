@@ -47,6 +47,17 @@ class Ribbit(models.Model):
 	d_sign = models.CharField(max_length=128, default="")
 	retweeted = models.IntegerField(default=0)
 
+	def digital_sign(self):
+		self.d_sign = add_signature(self.user.profile.private_key, b64encode(self.content))
+		self.save()
+
+	def digital_verify(self):
+		user_enc = UserRibbitEncryption.objects.get(user = self.user)
+		ver = verify_signature(user_enc.public_key, self.d_sign, b64encode(self.content))
+		print ver
+		print '*****************************'
+		return ver
+
 class RibbitForFollowers(models.Model):
 	public_key = models.CharField(max_length=140)
 	encrypted_content = models.ForeignKey(User)
@@ -94,7 +105,6 @@ class Messages(models.Model):
 		return u'%s %s %s' % (self.sender,":",self.content)
 
 	def digital_sign(self):
-		rec_enc = UserRibbitEncryption.objects.get(user = self.receiver)
 		self.d_sign = add_signature(self.sender.profile.private_key, b64encode(self.content))
 		self.save()
 
@@ -103,13 +113,6 @@ class Messages(models.Model):
 		rec_enc = UserRibbitEncryption.objects.get(user = self.receiver)
 		ver = verify_signature(sender_enc.public_key, self.d_sign, b64encode(self.content))
 		return ver
-		# user_enc = UserRibbitEncryption.objects.get(user = self.sender)
-		# print(user_enc.public_key)
-		# hashed = decrypt(self.d_sign, user_enc.public_key)
-		# match = (hashed == bcrypt.hashpw(self.content.encode('utf-8'), hashed))
-		# print(match)
-		# print('**************************************')
-		# return match
 
 User.profile = property(lambda u: UserProfile.objects.get_or_create(user=u)[0])
 User.enc = property(lambda u: UserRibbitEncryption.objects.get_or_create(user=u)[0])

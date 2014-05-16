@@ -25,6 +25,7 @@ def index(request, auth_form=None, user_form=None):
 		ribbits_self = []
 		for qribbit in Ribbit.objects.filter(user=user.id):
 			ribbits_self.append(qribbit)
+			qribbit.digital_verify()
 		ribbits_buddies = []
 		for fuser in Follow.objects.filter(follower=request.user):
 			for ribbit in Ribbit.objects.filter(user=fuser.followed):
@@ -140,6 +141,7 @@ def submit(request):
 			
 			# Loop on the followers of this user, encrypt the content using the public keys of the followers and then save it as a
 			# new object in the "RibbitForFollowers" model.
+			ribbit.digital_sign()
 			ribbit.save()
 			return redirect(next_url)
 		else:
